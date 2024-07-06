@@ -1,0 +1,49 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Update package cache (Detecting Linux distribution)
+      ansible.builtin.command: "echo '{{ ansible_distribution }}'"
+      register: linux_distribution
+
+    - name: Install MySQL on Amazon Linux
+      ansible.builtin.yum:
+        name: mariadb105
+        state: present
+      when: linux_distribution.stdout == "Amazon"
+
+    - name: Install Tomcat on Amazon Linux
+      ansible.builtin.yum:
+        name: tomcat9                   #update server version according to ami
+        state: present
+      when: linux_distribution.stdout == "Amazon"
+
+    - name: Install Memcached on Amazon Linux
+      ansible.builtin.yum:
+        name: memcached
+        state: present
+      when: linux_distribution.stdout == "Amazon"
+
+    - name: Install Redis on Amazon Linux
+      ansible.builtin.yum:
+        name: redis6
+        state: present
+      when: linux_distribution.stdout == "Amazon"
+
+    # Add more tasks as needed for your application setup
+
+    - name: Deploy sample WAR file
+      ansible.builtin.copy:
+        src: /home/shivam_yadav/Downloads/sample.war
+        dest: /var/lib/tomcat9/webapps/sample.war #directory must be created
+      notify:
+        - restart tomcat
+
+  handlers:
+    - name: restart tomcat
+      ansible.builtin.service:
+        name: tomcat9
+        state: restarted
+
+
+#For run ansible playbook use this : ansible-playbook -i inventory playbook.yml

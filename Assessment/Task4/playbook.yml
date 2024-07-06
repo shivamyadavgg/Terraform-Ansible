@@ -1,0 +1,33 @@
+---
+- name: Monitor and Restart Tomcat Application
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Check if the WAR file has changed
+      stat:
+        path: /home/shivam_yadav/Rapimoney_DevOps/Assignment-----/point4/roles/tomcat/templates/sample.war   #path of your war file
+      register: war_file_info
+
+    - name: Restart Tomcat if WAR file has changed
+      command: "service tomcat restart"
+      when: war_file_info.stat.exists == true and war_file_info.stat.mtime > ansible_date_time.epoch
+
+    - name: Check if Tomcat process is running
+      shell: "ps aux | grep [t]omcat"
+      register: tomcat_process_status
+      ignore_errors: yes
+
+    - name: Print top 10 running processes
+      shell: "ps aux --sort=-%cpu | head -n 11"
+      register: top_processes
+
+    - name: Display top 10 running processes
+      debug:
+        msg: "{{ top_processes.stdout_lines }}"
+
+  handlers:
+    - name: Restart Tomcat
+      service:
+        name: tomcat
+        state: restarted
